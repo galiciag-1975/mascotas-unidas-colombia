@@ -16,6 +16,7 @@ pieza de pago es Claude (Anthropic), y solo se cobra por uso real, con un costo 
 3. **Supabase** — [supabase.com/dashboard/sign-up](https://supabase.com/dashboard/sign-up) — base de datos, fotos y panel de datos.
 4. **Hugging Face** — [huggingface.co/join](https://huggingface.co/join) — clasificación gratuita de razas.
 5. **Anthropic Console** — [console.anthropic.com](https://console.anthropic.com) — análisis detallado con IA (requiere tarjeta y unos dólares de crédito, ej. $5 USD alcanzan para miles de análisis).
+6. **Google reCAPTCHA** — [google.com/recaptcha/admin/create](https://www.google.com/recaptcha/admin/create) — protege el formulario contra bots (gratis, solo necesita una cuenta de Google).
 
 ---
 
@@ -72,11 +73,23 @@ Puedes repetir esto para crear varios administradores.
 3. En **Billing**, agrega unos dólares de crédito (con $5 USD alcanza para miles de fotos
    analizadas con el botón "Analizar con IA").
 
-## Paso 5 — Desplegar en Vercel (dominio gratis incluido)
+## Paso 5 — Google reCAPTCHA (protección contra bots)
+
+1. Entra a [google.com/recaptcha/admin/create](https://www.google.com/recaptcha/admin/create) con
+   tu cuenta de Google.
+2. Ponle una etiqueta (ej. `mascotas-unidas-colombia`), elige tipo **reCAPTCHA v2** → **"No soy un
+   robot" (Checkbox)**.
+3. En "Dominios", agrega el dominio de tu sitio (ej. `mascotas-unidas-colombia-ten.vercel.app`) y,
+   si vas a probar en tu computador, también `localhost`.
+4. Acepta los términos y crea. Copia:
+   - **Clave del sitio** → será tu `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
+   - **Clave secreta** → será tu `RECAPTCHA_SECRET_KEY`
+
+## Paso 6 — Desplegar en Vercel (dominio gratis incluido)
 
 1. Entra a [vercel.com/new](https://vercel.com/new) e importa tu repositorio de GitHub
    `mascotas-unidas-colombia`.
-2. En **Environment Variables**, agrega las 6 variables (puedes copiar y pegar desde tu
+2. En **Environment Variables**, agrega las 8 variables (puedes copiar y pegar desde tu
    `.env.local` una vez lo tengas armado localmente, ver `.env.local.example`):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -84,6 +97,8 @@ Puedes repetir esto para crear varios administradores.
    - `HUGGINGFACE_API_TOKEN`
    - `ANTHROPIC_API_KEY`
    - `ADMIN_SESSION_SECRET` (genera uno con `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
+   - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
+   - `RECAPTCHA_SECRET_KEY`
 3. Click **Deploy**. En 1-2 minutos tu sitio queda publicado en una URL gratuita:
    **`https://mascotas-unidas-colombia.vercel.app`** (o `-tuusuario.vercel.app` si el nombre
    ya está tomado por otro proyecto de Vercel).
@@ -96,7 +111,7 @@ comprar el dominio (~10-15 USD/año en [Namecheap](https://namecheap.com) o simi
 gratis desde **Vercel → Project Settings → Domains**. El subdominio `.vercel.app` gratuito
 funciona perfectamente mientras tanto y se puede compartir igual por WhatsApp y redes.
 
-## Paso 6 — Probar
+## Paso 7 — Probar
 
 Abre tu sitio publicado y prueba: registrar una mascota perdida con foto (verás la raza
 sugerida automáticamente), usa el botón "Analizar con IA" para completar color/rostro/pelaje,

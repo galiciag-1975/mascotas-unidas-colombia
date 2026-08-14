@@ -2,10 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import Script from "next/script";
 import PhotoUploader from "./PhotoUploader";
 import CityFilter from "./CityFilter";
 import type { Especie, TipoCaso } from "@/lib/types";
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      getResponse: (widgetId?: number) => string;
+      reset: (widgetId?: number) => void;
+    };
+  }
+}
 
 interface PetCaseFormProps {
   tipo: TipoCaso;
@@ -31,6 +40,7 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
   const [campos, setCampos] = useState(CAMPOS_VACIOS);
   const [fotos, setFotos] = useState<string[]>([]);
   const [analizando, setAnalizando] = useState(false);
+  const [analisisUsado, setAnalisisUsado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +53,8 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
       setError("Sube al menos una foto antes de analizarla con IA.");
       return;
     }
+    if (analisisUsado) return;
+    setAnalisisUsado(true);
     setAnalizando(true);
     setError(null);
     try {
@@ -77,6 +89,12 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
       return;
     }
 
+    const recaptchaToken = window.grecaptcha?.getResponse();
+    if (!recaptchaToken) {
+      setError("Marca la casilla de verificación antes de enviar.");
+      return;
+    }
+
     setEnviando(true);
 
     const camposLimpios = Object.fromEntries(
@@ -86,16 +104,18 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
       ])
     );
 
-    const { data, error: insertError } = await supabase
-      .from("pet_cases")
-      .insert({ tipo, ...camposLimpios, fotos })
-      .select()
-      .single();
+    const res = await fetch("/api/cases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo, ...camposLimpios, fotos, recaptchaToken }),
+    });
 
+    const data = await res.json().catch(() => null);
+    window.grecaptcha?.reset();
     setEnviando(false);
 
-    if (insertError || !data) {
-      setError("No se pudo registrar el caso. Intenta de nuevo en unos minutos.");
+    if (!res.ok || !data) {
+      setError(data?.error ?? "No se pudo registrar el caso. Intenta de nuevo en unos minutos.");
       return;
     }
 
@@ -116,13 +136,17 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
         <button
           type="button"
           onClick={analizarConIA}
-          disabled={analizando || fotos.length === 0}
+          disabled={analizando || analisisUsado || fotos.length === 0}
           className="mt-3 text-sm px-3 py-1.5 rounded-lg bg-violet-100 text-violet-700 font-medium hover:bg-violet-200 disabled:opacity-50"
         >
-          {analizando ? "Analizando foto..." : "✨ Analizar con IA"}
+          {analizando
+            ? "Analizando foto..."
+            : analisisUsado
+              ? "Ya usaste el análisis con IA"
+              : "✨ Analizar con IA"}
         </button>
         <p className="text-xs text-zinc-500 mt-1">
-          La IA sugiere color, forma del rostro, patrón de pelaje, características y raza a partir de la foto. Siempre puedes corregir los campos.
+          La IA sugiere color, forma del rostro, patrón de pelaje, características y raza a partir de la foto (solo se puede usar una vez por registro). Siempre puedes corregir los campos.
         </p>
       </div>
 
@@ -288,6 +312,11 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
           </div>
         </div>
       </fieldset>
+
+      <div>
+        <Script src="https://www.google.com/recaptcha/api.js" strategy="afterInteractive" />
+        <div className="g-recaptcha" data-sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} />
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

@@ -36,12 +36,11 @@ create index if not exists pet_cases_created_at_idx on pet_cases (created_at des
 
 alter table pet_cases enable row level security;
 
--- Cualquiera puede registrar un caso (no requiere login)
+-- El registro de casos NO se hace con la anon key desde el navegador:
+-- pasa por app/api/cases/route.ts (verifica reCAPTCHA y el límite de
+-- 2 registros/día por IP) usando la service role key, que ignora RLS.
+-- Por eso no hay policy de INSERT para "anon" en esta tabla.
 drop policy if exists "public_insert_cases" on pet_cases;
-create policy "public_insert_cases" on pet_cases
-  for insert
-  to anon
-  with check (estado = 'activo');
 
 -- Cualquiera puede ver los casos (para buscar y compartir)
 drop policy if exists "public_select_cases" on pet_cases;
@@ -98,6 +97,19 @@ alter table admins enable row level security;
 -- Para crear el primer administrador, genera un hash con:
 --   node scripts/crear-admin.mjs tu_usuario tu_contraseña
 -- y pega el INSERT que te imprime.
+
+-- =========================================================
+-- Límite de 2 registros por día por dirección IP (anti-spam).
+-- Sin acceso público: solo lo usa app/api/cases/route.ts con la
+-- service role key.
+-- =========================================================
+create table if not exists rate_limits (
+  ip_address text primary key,
+  count int not null default 1,
+  window_start timestamptz not null default now()
+);
+
+alter table rate_limits enable row level security;
 
 -- =========================================================
 -- Storage: bucket público para las fotos de las mascotas
