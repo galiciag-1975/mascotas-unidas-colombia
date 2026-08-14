@@ -6,6 +6,7 @@ export default function Footer() {
           Mascotas Unidas Colombia — plataforma comunitaria para reunir mascotas con sus familias
           tras el terremoto.
         </p>
+        <p className="mt-1">Luis Galicia</p>
         <p className="mt-1">
           <a href="/admin/login" className="hover:text-amber-600 underline">
             Panel administrativo
