@@ -22,8 +22,30 @@ export async function marcarComoActiva(id: string) {
   revalidatePath("/admin");
 }
 
+function extraerRutaStorage(url: string): string | null {
+  const marcador = "/fotos-mascotas/";
+  const indice = url.indexOf(marcador);
+  return indice === -1 ? null : url.slice(indice + marcador.length);
+}
+
 export async function eliminarCaso(id: string) {
   await requireAdmin();
+
+  const { data: caso } = await supabaseAdmin
+    .from("pet_cases")
+    .select("fotos")
+    .eq("id", id)
+    .maybeSingle();
+
+  const fotos = (caso?.fotos ?? []) as string[];
+  const rutas = fotos
+    .map(extraerRutaStorage)
+    .filter((ruta): ruta is string => ruta !== null);
+
+  if (rutas.length > 0) {
+    await supabaseAdmin.storage.from("fotos-mascotas").remove(rutas);
+  }
+
   await supabaseAdmin.from("pet_cases").delete().eq("id", id);
   revalidatePath("/admin");
 }
