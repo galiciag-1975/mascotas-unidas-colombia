@@ -126,6 +126,25 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
+        <label htmlFor="especie" className="block text-sm font-medium text-zinc-700 mb-1">
+          Especie
+        </label>
+        <select
+          id="especie"
+          value={campos.especie}
+          onChange={(e) => set("especie", e.target.value as Especie)}
+          className="w-full sm:w-64 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+        >
+          <option value="perro">Perro</option>
+          <option value="gato">Gato</option>
+          <option value="otro">Otra</option>
+        </select>
+        <p className="text-xs text-zinc-500 mt-1">
+          Elige la especie antes de subir la foto: así la IA sabe si debe reconocer razas de perro o de gato.
+        </p>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-zinc-700 mb-2">Fotos</label>
         <PhotoUploader
           fotos={fotos}
@@ -151,22 +170,6 @@ export default function PetCaseForm({ tipo }: PetCaseFormProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="especie" className="block text-sm font-medium text-zinc-700 mb-1">
-            Especie
-          </label>
-          <select
-            id="especie"
-            value={campos.especie}
-            onChange={(e) => set("especie", e.target.value as Especie)}
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-          >
-            <option value="perro">Perro</option>
-            <option value="gato">Gato</option>
-            <option value="otro">Otra</option>
-          </select>
-        </div>
-
         <div>
           <label htmlFor="raza" className="block text-sm font-medium text-zinc-700 mb-1">
             Raza aproximada
